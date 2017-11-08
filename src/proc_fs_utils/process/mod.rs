@@ -22,6 +22,18 @@ fn is_process_entry(entry: &DirEntry) -> bool {
     }
 }
 
+fn scan_process_entry(path: &Path) -> io::Result<ProcessInfo> {
+    let command_line = parse_command_line(path)?;
+    if command_line.is_empty() {
+        let e = io::Error::new(io::ErrorKind::InvalidData, "no command line!");
+        return Err(e);
+    }
+
+    let uid = parse_login_uid(path)?;
+    let user_name = get_user_name(path)?;
+    Ok(ProcessInfo::new(&command_line, uid, &user_name))
+}
+
 pub fn scan_process_entries() -> io::Result<Vec<ProcessInfo>> {
     let proc_path = Path::new("/proc");
     let mut processes: Vec<ProcessInfo> = vec![];
@@ -30,15 +42,8 @@ pub fn scan_process_entries() -> io::Result<Vec<ProcessInfo>> {
         let entry = entry_result?;
 
         if is_process_entry(&entry) {
-            if let Ok(command_line) = parse_command_line(&entry.path()) {
-                if !command_line.is_empty() {
-                    if let Ok(uid) = parse_login_uid(&entry.path()) {
-                        if let Ok(user_name) = get_user_name(&entry.path()) {
-                            let process = ProcessInfo::new(&command_line, uid, &user_name);
-                            processes.push(process);
-                        }
-                    }
-                }
+            if let Ok(process) = scan_process_entry(&entry.path()) {
+                processes.push(process);
             }
         }
     }

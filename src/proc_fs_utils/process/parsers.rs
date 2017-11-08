@@ -22,6 +22,12 @@ fn read_proc_file_content(path: &Path, file_name: &str) -> Result<String> {
     }
 }
 
+fn get_row_with_key(path: &Path, file_name: &str, key: &str) -> Result<String> {
+    let content = read_proc_file_content(path, file_name)?;
+
+    Ok(String::new())
+}
+
 pub fn parse_command_line(path: &Path) -> Result<String> {
     let replace = |ch: u8| -> u8 {
         if ch == 0 { ' ' as u8 } else { ch }
