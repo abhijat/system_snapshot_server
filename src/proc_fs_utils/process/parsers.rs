@@ -23,9 +23,16 @@ fn read_proc_file_content(path: &Path, file_name: &str) -> Result<String> {
 }
 
 fn get_row_with_key(path: &Path, file_name: &str, key: &str) -> Result<String> {
-    let content = read_proc_file_content(path, file_name)?;
 
-    Ok(String::new())
+    let content = read_proc_file_content(path, file_name)?;
+    for line in content.lines() {
+        if line.starts_with(key) {
+            return Ok(line.to_owned());
+        }
+    }
+
+    let error = Error::new(ErrorKind::NotFound, format!("{} not found in {}", key, file_name));
+    Err(error)
 }
 
 pub fn parse_command_line(path: &Path) -> Result<String> {
@@ -97,5 +104,20 @@ pub fn get_user_name(path: &Path) -> Result<String> {
             }
         }
         Err(e) => Err(e)
+    }
+}
+
+pub fn get_process_state(path: &Path) -> Result<String> {
+    let state_line = get_row_with_key(path, "status", "State:")?;
+    let tokens: Vec<&str> = state_line.splitn(2, ":").collect();
+    match tokens.len() {
+        2 => {
+            let s = tokens[1].trim();
+            Ok(s.to_owned())
+        }
+        _ => {
+            let msg = format!("invalid data: {}", state_line);
+            Err(Error::new(ErrorKind::InvalidData, msg))
+        }
     }
 }

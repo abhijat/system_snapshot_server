@@ -9,6 +9,7 @@ use self::types::ProcessInfo;
 use self::parsers::get_user_name;
 use self::parsers::parse_login_uid;
 use self::parsers::parse_command_line;
+use self::parsers::get_process_state;
 
 fn is_process_entry(entry: &DirEntry) -> bool {
     match entry.path().file_name() {
@@ -31,7 +32,8 @@ fn scan_process_entry(path: &Path) -> io::Result<ProcessInfo> {
 
     let uid = parse_login_uid(path)?;
     let user_name = get_user_name(path)?;
-    Ok(ProcessInfo::new(&command_line, uid, &user_name))
+    let state = get_process_state(path)?;
+    Ok(ProcessInfo::new(&command_line, uid, &user_name, &state))
 }
 
 pub fn scan_process_entries() -> io::Result<Vec<ProcessInfo>> {
