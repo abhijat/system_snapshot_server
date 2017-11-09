@@ -1,3 +1,4 @@
+
 use std::path::Path;
 use std::ptr::null_mut;
 use std::io::{Result, Read, Error, ErrorKind};
@@ -111,10 +112,7 @@ pub fn get_process_state(path: &Path) -> Result<String> {
     let state_line = get_row_with_key(path, "status", "State:")?;
     let tokens: Vec<&str> = state_line.splitn(2, ":").collect();
     match tokens.len() {
-        2 => {
-            let s = tokens[1].trim();
-            Ok(s.to_owned())
-        }
+        2 => Ok(tokens[1].trim().to_owned()),
         _ => {
             let msg = format!("invalid data: {}", state_line);
             Err(Error::new(ErrorKind::InvalidData, msg))
