@@ -15,12 +15,13 @@ mod proc_fs_utils;
 mod http;
 
 fn formatter(out: fern::FormatCallback, message: &std::fmt::Arguments, record: &log::LogRecord) {
+    let timestamp = chrono::Local::now().format("[%Y-%m-%d %H:%M:%S]");
     out.finish(format_args!(
         "{timestamp} [{target}] [{level}] {message}",
-        timestamp=chrono::Local::now().format("[%Y-%m-%d %H:%M:%S]"),
-        target=record.target(),
-        level=record.level(),
-        message=message
+        timestamp = timestamp,
+        target = record.target(),
+        level = record.level(),
+        message = message
     ));
 }
 

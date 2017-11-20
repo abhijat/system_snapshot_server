@@ -2,7 +2,6 @@ mod parsers;
 pub mod types;
 
 use std::path::Path;
-use std::io;
 use std::fs::DirEntry;
 
 use self::types::ProcessInfo;
@@ -23,11 +22,10 @@ fn is_process_entry(entry: &DirEntry) -> bool {
     }
 }
 
-fn scan_process_entry(path: &Path) -> io::Result<ProcessInfo> {
+fn scan_process_entry(path: &Path) -> Result<ProcessInfo, String> {
     let command_line = parse_command_line(path)?;
     if command_line.is_empty() {
-        let e = io::Error::new(io::ErrorKind::InvalidData, "no command line!");
-        return Err(e);
+        return Err("no command line".to_owned());
     }
 
     let uid = parse_login_uid(path)?;
@@ -36,12 +34,12 @@ fn scan_process_entry(path: &Path) -> io::Result<ProcessInfo> {
     Ok(ProcessInfo::new(&command_line, uid, &user_name, &state))
 }
 
-pub fn scan_process_entries() -> io::Result<Vec<ProcessInfo>> {
+pub fn scan_process_entries() -> Result<Vec<ProcessInfo>, String> {
     let proc_path = Path::new("/proc");
     let mut processes: Vec<ProcessInfo> = vec![];
 
-    for entry_result in proc_path.read_dir()? {
-        let entry = entry_result?;
+    for entry_result in proc_path.read_dir().map_err(|e| e.to_string())? {
+        let entry = entry_result.map_err(|e| e.to_string())?;
 
         if is_process_entry(&entry) {
             if let Ok(process) = scan_process_entry(&entry.path()) {

@@ -1,30 +1,30 @@
-
 use std::path::Path;
 use std::ptr::null_mut;
-use std::io::{Result, Read, Error, ErrorKind};
+use std::io::Read;
 use std::ffi::CStr;
+use std::fs::File;
 
 use libc;
 
 // TODO use asref here
-fn read_proc_file_content(path: &Path, file_name: &str) -> Result<String> {
+fn read_proc_file_content(path: &Path, file_name: &str) -> Result<String, String> {
     let command_line_path = path.join(file_name);
 
     if command_line_path.exists() {
-        let mut f = ::std::fs::File::open(command_line_path)?;
+        let mut f = File::open(command_line_path)
+            .map_err(|e| e.to_string())?;
+
         let mut buffer = String::new();
 
-        f.read_to_string(&mut buffer)?;
+        f.read_to_string(&mut buffer).map_err(|e| e.to_string())?;
+
         Ok(buffer)
     } else {
-        let error_message = format!("missing file: {:?}", command_line_path);
-        let error = Error::new(ErrorKind::NotFound, error_message);
-        Err(error)
+        Err(format!("missing file: {:?}", command_line_path))
     }
 }
 
-fn get_row_with_key(path: &Path, file_name: &str, key: &str) -> Result<String> {
-
+fn get_row_with_key(path: &Path, file_name: &str, key: &str) -> Result<String, String> {
     let content = read_proc_file_content(path, file_name)?;
     for line in content.lines() {
         if line.starts_with(key) {
@@ -32,11 +32,10 @@ fn get_row_with_key(path: &Path, file_name: &str, key: &str) -> Result<String> {
         }
     }
 
-    let error = Error::new(ErrorKind::NotFound, format!("{} not found in {}", key, file_name));
-    Err(error)
+    Err(format!("{} not found in {}", key, file_name))
 }
 
-pub fn parse_command_line(path: &Path) -> Result<String> {
+pub fn parse_command_line(path: &Path) -> Result<String, String> {
     let replace = |ch: u8| -> u8 {
         if ch == 0 { ' ' as u8 } else { ch }
     };
@@ -53,20 +52,16 @@ pub fn parse_command_line(path: &Path) -> Result<String> {
     })
 }
 
-pub fn parse_login_uid(path: &Path) -> Result<u32> {
+pub fn parse_login_uid(path: &Path) -> Result<u32, String> {
     let content = read_proc_file_content(path, "loginuid")?;
 
     match content.parse::<u32>() {
         Ok(uid) => Ok(uid),
-        Err(e) => {
-            let error = Error::new(ErrorKind::InvalidData, e);
-            Err(error)
-        }
+        Err(e) => Err(e.to_string())
     }
 }
 
 unsafe fn get_user_name_unsafe(uid: u32) -> Option<String> {
-
     let mut passwd: libc::passwd = ::std::mem::zeroed();
     let mut buf = Vec::with_capacity(1024);
 
@@ -87,20 +82,15 @@ unsafe fn get_user_name_unsafe(uid: u32) -> Option<String> {
         }
         _ => None
     }
-
 }
 
-pub fn get_user_name(path: &Path) -> Result<String> {
+pub fn get_user_name(path: &Path) -> Result<String, String> {
     match parse_login_uid(path) {
         Ok(uid) => {
             unsafe {
                 match get_user_name_unsafe(uid) {
                     Some(user_name) => Ok(user_name),
-                    None => {
-                        let msg = format!("no user name for id {}", uid);
-                        let error = Error::new(ErrorKind::InvalidData, msg);
-                        Err(error)
-                    }
+                    None => Err(format!("no user name for id {}", uid))
                 }
             }
         }
@@ -108,14 +98,11 @@ pub fn get_user_name(path: &Path) -> Result<String> {
     }
 }
 
-pub fn get_process_state(path: &Path) -> Result<String> {
+pub fn get_process_state(path: &Path) -> Result<String, String> {
     let state_line = get_row_with_key(path, "status", "State:")?;
     let tokens: Vec<&str> = state_line.splitn(2, ":").collect();
     match tokens.len() {
         2 => Ok(tokens[1].trim().to_owned()),
-        _ => {
-            let msg = format!("invalid data: {}", state_line);
-            Err(Error::new(ErrorKind::InvalidData, msg))
-        }
+        _ => Err(format!("invalid data: {}", state_line))
     }
 }
