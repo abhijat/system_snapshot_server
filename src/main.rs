@@ -6,6 +6,9 @@ extern crate fern;
 extern crate chrono;
 
 #[macro_use]
+extern crate failure;
+
+#[macro_use]
 extern crate serde_derive;
 
 #[macro_use]

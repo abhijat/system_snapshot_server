@@ -1,14 +1,17 @@
+mod process_parsers;
 mod parsers;
 pub mod types;
 
 use std::path::Path;
 use std::fs::DirEntry;
 
+use failure::{err_msg, Error};
+
 use self::types::ProcessInfo;
-use self::parsers::get_user_name;
-use self::parsers::parse_login_uid;
-use self::parsers::parse_command_line;
-use self::parsers::get_process_state;
+use self::process_parsers::get_user_name;
+use self::process_parsers::parse_login_uid;
+use self::process_parsers::parse_command_line;
+use self::process_parsers::get_process_state;
 
 fn is_process_entry(entry: &DirEntry) -> bool {
     match entry.path().file_name() {
@@ -22,10 +25,10 @@ fn is_process_entry(entry: &DirEntry) -> bool {
     }
 }
 
-fn scan_process_entry(path: &Path) -> Result<ProcessInfo, String> {
+fn scan_process_entry(path: &Path) -> Result<ProcessInfo, Error> {
     let command_line = parse_command_line(path)?;
     if command_line.is_empty() {
-        return Err("no command line".to_owned());
+        return Err(err_msg("no command line"));
     }
 
     let uid = parse_login_uid(path)?;
