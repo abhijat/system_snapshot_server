@@ -37,12 +37,12 @@ fn scan_process_entry(path: &Path) -> Result<ProcessInfo, Error> {
     Ok(ProcessInfo::new(&command_line, uid, &user_name, &state))
 }
 
-pub fn scan_process_entries() -> Result<Vec<ProcessInfo>, String> {
+pub fn scan_process_entries() -> Result<Vec<ProcessInfo>, Error> {
     let proc_path = Path::new("/proc");
     let mut processes: Vec<ProcessInfo> = vec![];
 
-    for entry_result in proc_path.read_dir().map_err(|e| e.to_string())? {
-        let entry = entry_result.map_err(|e| e.to_string())?;
+    for entry_result in proc_path.read_dir()? {
+        let entry = entry_result?;
 
         if is_process_entry(&entry) {
             if let Ok(process) = scan_process_entry(&entry.path()) {

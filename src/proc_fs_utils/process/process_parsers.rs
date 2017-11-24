@@ -13,11 +13,10 @@ fn read_proc_file_content(path: &Path, file_name: &str) -> Result<String, Error>
     let command_line_path = path.join(file_name);
 
     if command_line_path.exists() {
-        let mut f = File::open(command_line_path)?;
-
         let mut buffer = String::new();
 
-        f.read_to_string(&mut buffer)?;
+        File::open(command_line_path)?
+            .read_to_string(&mut buffer)?;
 
         Ok(buffer)
     } else {
@@ -26,8 +25,7 @@ fn read_proc_file_content(path: &Path, file_name: &str) -> Result<String, Error>
 }
 
 fn get_row_with_key(path: &Path, file_name: &str, key: &str) -> Result<String, Error> {
-    let content = read_proc_file_content(path, file_name)?;
-    for line in content.lines() {
+    for line in read_proc_file_content(path, file_name)?.lines() {
         if line.starts_with(key) {
             return Ok(line.to_owned());
         }
@@ -37,13 +35,13 @@ fn get_row_with_key(path: &Path, file_name: &str, key: &str) -> Result<String, E
 }
 
 pub fn parse_command_line(path: &Path) -> Result<String, Error> {
-    let replace = |ch: u8| -> u8 {
+    let replacer = |ch: u8| -> u8 {
         if ch == 0 { ' ' as u8 } else { ch }
     };
 
     read_proc_file_content(path, "cmdline").map(|s| {
         let nulls_removed = s.bytes()
-            .map(replace)
+            .map(replacer)
             .collect::<Vec<u8>>();
 
         String::from_utf8(nulls_removed)
@@ -54,8 +52,8 @@ pub fn parse_command_line(path: &Path) -> Result<String, Error> {
 }
 
 pub fn parse_login_uid(path: &Path) -> Result<u32, Error> {
-    let content = read_proc_file_content(path, "loginuid")?;
-    let id = content.parse::<u32>()?;
+    let id = read_proc_file_content(path, "loginuid")?
+        .parse::<u32>()?;
     Ok(id)
 }
 
