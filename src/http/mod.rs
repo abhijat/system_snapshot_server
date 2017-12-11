@@ -47,6 +47,7 @@ fn show_cpu_info(request: &mut Request) -> IronResult<Response> {
 
 pub fn start_server() {
     let mut router = self::routing::Router::new();
+
     router.add_route("processes".to_owned(), list_processes);
     router.add_route("cpu".to_owned(), show_cpu_info);
 

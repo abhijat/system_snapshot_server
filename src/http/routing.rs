@@ -22,7 +22,6 @@ impl Handler for Router {
     fn handle(&self, req: &mut Request) -> IronResult<Response> {
 
         let url = &req.url.path().join("/");
-
         debug!("matching {} to route map", url);
 
         match self.routes.get(url) {
