@@ -1,0 +1,1 @@
+export RUST_LOG=ERROR,system_snapshot_server=DEBUG
