@@ -8,6 +8,9 @@ For now there is not much configuration, so simply execute:
     cargo run
     
 This will start a web server on port 3000. 
+For logs to appear source env.sh (set the logging variable to taste in the file).
+
+
 Two URLs are available right now:
 
 /processes -> shows running processes on the machine
